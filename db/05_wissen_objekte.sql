@@ -1,0 +1,529 @@
+-- ============================================================================
+-- Kīlauea, Phase 16b: Folgen, Trigger, Indizes, Spatial und Paket KIL_WISSEN
+-- Wie 02: Folge KIL_<T>_SEQ und Trigger KIL_<T>_BI vergeben die ID; SRID 8307, Toleranz 0,05 m;
+-- der Eintrag in USER_SDO_GEOM_METADATA steht vor dem Spatial-Index.
+-- KIL_WISSEN: Laden großer Geometrien in Stücken (für db/06), wo_liegt, Läufe.
+-- ============================================================================
+
+-- Folgen
+
+CREATE SEQUENCE KIL_ORT_SEQ START WITH 1 INCREMENT BY 1 NOCACHE
+/
+
+CREATE SEQUENCE KIL_KRATER_SEQ START WITH 1 INCREMENT BY 1 NOCACHE
+/
+
+CREATE SEQUENCE KIL_STROM_SEQ START WITH 1 INCREMENT BY 1 NOCACHE
+/
+
+CREATE SEQUENCE KIL_STATION_SEQ START WITH 1 INCREMENT BY 1 NOCACHE
+/
+
+CREATE SEQUENCE KIL_DREHBUCH_SEQ START WITH 1 INCREMENT BY 1 NOCACHE
+/
+
+CREATE SEQUENCE KIL_KAPITEL_SEQ START WITH 1 INCREMENT BY 1 NOCACHE
+/
+
+CREATE SEQUENCE KIL_LAUF_SEQ START WITH 1 INCREMENT BY 1 NOCACHE
+/
+
+CREATE SEQUENCE KIL_BEBEN_SEQ START WITH 1 INCREMENT BY 1 CACHE 100
+/
+
+CREATE SEQUENCE KIL_MESSUNG_SEQ START WITH 1 INCREMENT BY 1 CACHE 50
+/
+
+-- Trigger
+
+CREATE OR REPLACE TRIGGER KIL_ORT_BI
+BEFORE INSERT ON KIL_ORT
+FOR EACH ROW
+WHEN (NEW.ORT_ID IS NULL)
+BEGIN
+  :NEW.ORT_ID := KIL_ORT_SEQ.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER KIL_KRATER_BI
+BEFORE INSERT ON KIL_KRATER
+FOR EACH ROW
+WHEN (NEW.KRATER_ID IS NULL)
+BEGIN
+  :NEW.KRATER_ID := KIL_KRATER_SEQ.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER KIL_STROM_BI
+BEFORE INSERT ON KIL_STROM
+FOR EACH ROW
+WHEN (NEW.STROM_ID IS NULL)
+BEGIN
+  :NEW.STROM_ID := KIL_STROM_SEQ.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER KIL_STATION_BI
+BEFORE INSERT ON KIL_STATION
+FOR EACH ROW
+WHEN (NEW.STATION_ID IS NULL)
+BEGIN
+  :NEW.STATION_ID := KIL_STATION_SEQ.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER KIL_DREHBUCH_BI
+BEFORE INSERT ON KIL_DREHBUCH
+FOR EACH ROW
+WHEN (NEW.DREHBUCH_ID IS NULL)
+BEGIN
+  :NEW.DREHBUCH_ID := KIL_DREHBUCH_SEQ.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER KIL_KAPITEL_BI
+BEFORE INSERT ON KIL_KAPITEL
+FOR EACH ROW
+WHEN (NEW.KAPITEL_ID IS NULL)
+BEGIN
+  :NEW.KAPITEL_ID := KIL_KAPITEL_SEQ.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER KIL_LAUF_BI
+BEFORE INSERT ON KIL_LAUF
+FOR EACH ROW
+WHEN (NEW.LAUF_ID IS NULL)
+BEGIN
+  :NEW.LAUF_ID := KIL_LAUF_SEQ.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER KIL_BEBEN_BI
+BEFORE INSERT ON KIL_BEBEN
+FOR EACH ROW
+WHEN (NEW.BEBEN_ID IS NULL)
+BEGIN
+  :NEW.BEBEN_ID := KIL_BEBEN_SEQ.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER KIL_MESSUNG_BI
+BEFORE INSERT ON KIL_MESSUNG
+FOR EACH ROW
+WHEN (NEW.MESSUNG_ID IS NULL)
+BEGIN
+  :NEW.MESSUNG_ID := KIL_MESSUNG_SEQ.NEXTVAL;
+END;
+/
+
+-- Indizes auf Fremdschlüsseln und für die Abfragen
+
+CREATE INDEX KIL_KRATER_ORT_IX ON KIL_KRATER (ORT_ID)
+/
+
+CREATE INDEX KIL_STROM_JAHR_IX ON KIL_STROM (VULKAN, JAHR_VON)
+/
+
+CREATE INDEX KIL_DREHBUCH_ORT_IX ON KIL_DREHBUCH (ORT_ID)
+/
+
+CREATE INDEX KIL_LAUF_SITZUNG_IX ON KIL_LAUF (SITZUNG_ID)
+/
+
+CREATE INDEX KIL_LAUF_DREHBUCH_IX ON KIL_LAUF (DREHBUCH_ID, GESTARTET)
+/
+
+CREATE INDEX KIL_BEBEN_LAUF_IX ON KIL_BEBEN (LAUF_ID, SIM_STUNDE)
+/
+
+-- Spatial: Metadaten (ein Eintrag je Geometriespalte; schon vorhanden zählt als in Ordnung)
+
+BEGIN
+  INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+  VALUES ('KIL_ORT', 'GEOM',
+          MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('Long', -156.2, -154.6, 0.05),
+                              MDSYS.SDO_DIM_ELEMENT('Lat', 18.8, 20.4, 0.05)), 8307);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN NULL;
+  WHEN OTHERS THEN
+    IF SQLCODE = -13223 OR INSTR(SQLERRM, 'ORA-13223') > 0 THEN NULL; ELSE RAISE; END IF;
+END;
+/
+
+BEGIN
+  INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+  VALUES ('KIL_KRATER', 'MITTE',
+          MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('Long', -156.2, -154.6, 0.05),
+                              MDSYS.SDO_DIM_ELEMENT('Lat', 18.8, 20.4, 0.05)), 8307);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN NULL;
+  WHEN OTHERS THEN
+    IF SQLCODE = -13223 OR INSTR(SQLERRM, 'ORA-13223') > 0 THEN NULL; ELSE RAISE; END IF;
+END;
+/
+
+BEGIN
+  INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+  VALUES ('KIL_KRATER', 'RAND',
+          MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('Long', -156.2, -154.6, 0.05),
+                              MDSYS.SDO_DIM_ELEMENT('Lat', 18.8, 20.4, 0.05)), 8307);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN NULL;
+  WHEN OTHERS THEN
+    IF SQLCODE = -13223 OR INSTR(SQLERRM, 'ORA-13223') > 0 THEN NULL; ELSE RAISE; END IF;
+END;
+/
+
+BEGIN
+  INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+  VALUES ('KIL_STROM', 'SCHLOT',
+          MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('Long', -156.2, -154.6, 0.05),
+                              MDSYS.SDO_DIM_ELEMENT('Lat', 18.8, 20.4, 0.05)), 8307);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN NULL;
+  WHEN OTHERS THEN
+    IF SQLCODE = -13223 OR INSTR(SQLERRM, 'ORA-13223') > 0 THEN NULL; ELSE RAISE; END IF;
+END;
+/
+
+BEGIN
+  INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+  VALUES ('KIL_STROM', 'SPALTE',
+          MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('Long', -156.2, -154.6, 0.05),
+                              MDSYS.SDO_DIM_ELEMENT('Lat', 18.8, 20.4, 0.05)), 8307);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN NULL;
+  WHEN OTHERS THEN
+    IF SQLCODE = -13223 OR INSTR(SQLERRM, 'ORA-13223') > 0 THEN NULL; ELSE RAISE; END IF;
+END;
+/
+
+BEGIN
+  INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+  VALUES ('KIL_STROM', 'ACHSE',
+          MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('Long', -156.2, -154.6, 0.05),
+                              MDSYS.SDO_DIM_ELEMENT('Lat', 18.8, 20.4, 0.05)), 8307);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN NULL;
+  WHEN OTHERS THEN
+    IF SQLCODE = -13223 OR INSTR(SQLERRM, 'ORA-13223') > 0 THEN NULL; ELSE RAISE; END IF;
+END;
+/
+
+BEGIN
+  INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+  VALUES ('KIL_STROM', 'UMRISS',
+          MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('Long', -156.2, -154.6, 0.05),
+                              MDSYS.SDO_DIM_ELEMENT('Lat', 18.8, 20.4, 0.05)), 8307);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN NULL;
+  WHEN OTHERS THEN
+    IF SQLCODE = -13223 OR INSTR(SQLERRM, 'ORA-13223') > 0 THEN NULL; ELSE RAISE; END IF;
+END;
+/
+
+BEGIN
+  INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+  VALUES ('KIL_STATION', 'GEOM',
+          MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('Long', -156.2, -154.6, 0.05),
+                              MDSYS.SDO_DIM_ELEMENT('Lat', 18.8, 20.4, 0.05)), 8307);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN NULL;
+  WHEN OTHERS THEN
+    IF SQLCODE = -13223 OR INSTR(SQLERRM, 'ORA-13223') > 0 THEN NULL; ELSE RAISE; END IF;
+END;
+/
+
+BEGIN
+  INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+  VALUES ('KIL_LAUF', 'GEOM',
+          MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('Long', -156.2, -154.6, 0.05),
+                              MDSYS.SDO_DIM_ELEMENT('Lat', 18.8, 20.4, 0.05)), 8307);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN NULL;
+  WHEN OTHERS THEN
+    IF SQLCODE = -13223 OR INSTR(SQLERRM, 'ORA-13223') > 0 THEN NULL; ELSE RAISE; END IF;
+END;
+/
+
+BEGIN
+  INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
+  VALUES ('KIL_BEBEN', 'GEOM',
+          MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('Long', -156.2, -154.6, 0.05),
+                              MDSYS.SDO_DIM_ELEMENT('Lat', 18.8, 20.4, 0.05)), 8307);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN NULL;
+  WHEN OTHERS THEN
+    IF SQLCODE = -13223 OR INSTR(SQLERRM, 'ORA-13223') > 0 THEN NULL; ELSE RAISE; END IF;
+END;
+/
+
+-- Spatial-Indizes
+
+CREATE INDEX KIL_ORT_GEOM_SX ON KIL_ORT (GEOM) INDEXTYPE IS MDSYS.SPATIAL_INDEX_V2 PARAMETERS ('layer_gtype=POINT')
+/
+
+CREATE INDEX KIL_KRATER_MITTE_SX ON KIL_KRATER (MITTE) INDEXTYPE IS MDSYS.SPATIAL_INDEX_V2 PARAMETERS ('layer_gtype=POINT')
+/
+
+CREATE INDEX KIL_KRATER_RAND_SX ON KIL_KRATER (RAND) INDEXTYPE IS MDSYS.SPATIAL_INDEX_V2 PARAMETERS ('layer_gtype=POLYGON')
+/
+
+CREATE INDEX KIL_STROM_SCHLOT_SX ON KIL_STROM (SCHLOT) INDEXTYPE IS MDSYS.SPATIAL_INDEX_V2 PARAMETERS ('layer_gtype=POINT')
+/
+
+CREATE INDEX KIL_STROM_SPALTE_SX ON KIL_STROM (SPALTE) INDEXTYPE IS MDSYS.SPATIAL_INDEX_V2 PARAMETERS ('layer_gtype=LINE')
+/
+
+CREATE INDEX KIL_STROM_ACHSE_SX ON KIL_STROM (ACHSE) INDEXTYPE IS MDSYS.SPATIAL_INDEX_V2 PARAMETERS ('layer_gtype=LINE')
+/
+
+CREATE INDEX KIL_STROM_UMRISS_SX ON KIL_STROM (UMRISS) INDEXTYPE IS MDSYS.SPATIAL_INDEX_V2 PARAMETERS ('layer_gtype=MULTIPOLYGON')
+/
+
+CREATE INDEX KIL_STATION_GEOM_SX ON KIL_STATION (GEOM) INDEXTYPE IS MDSYS.SPATIAL_INDEX_V2 PARAMETERS ('layer_gtype=POINT')
+/
+
+CREATE INDEX KIL_LAUF_GEOM_SX ON KIL_LAUF (GEOM) INDEXTYPE IS MDSYS.SPATIAL_INDEX_V2 PARAMETERS ('layer_gtype=POINT')
+/
+
+CREATE INDEX KIL_BEBEN_GEOM_SX ON KIL_BEBEN (GEOM) INDEXTYPE IS MDSYS.SPATIAL_INDEX_V2 PARAMETERS ('layer_gtype=POINT')
+/
+
+-- Paket KIL_WISSEN
+
+CREATE OR REPLACE PACKAGE KIL_WISSEN AS
+
+  -- Fassung des Pakets, etwa 'KIL_WISSEN 16.1 (Phase 16b)'
+  FUNCTION version RETURN VARCHAR2;
+
+  -- Große Geometrien in Stücken laden (db/06): geom_neu, dann geom_teil je bis 800 Zahlen, dann geom_setze.
+  PROCEDURE geom_neu;
+  PROCEDURE geom_teil(p_zahlen IN MDSYS.SDO_ORDINATE_ARRAY);
+  -- Setzt die gesammelte Geometrie in Tabelle.Spalte der Zeile mit Schlüsselspalte = Schlüssel, nur wenn die Spalte
+  -- leer ist (was du in der Datenbank änderst, bleibt). Prüft die Gültigkeit (Toleranz 0,05 m); ungültig: ORA-20032.
+  PROCEDURE geom_setze(
+    p_tabelle    IN VARCHAR2,
+    p_spalte     IN VARCHAR2,
+    p_schluessel_spalte IN VARCHAR2,
+    p_schluessel IN VARCHAR2,
+    p_gtype      IN NUMBER,
+    p_elem       IN MDSYS.SDO_ELEM_INFO_ARRAY);
+  -- Zahl der Geometrien, die geom_setze in dieser Sitzung gesetzt hat
+  FUNCTION geom_gesetzt RETURN NUMBER;
+
+  -- „Was liegt hier?“ als SQL: nächster Ort, Krater an der Stelle (der kleinste zuerst), jüngster Strom darunter.
+  -- SELECT KIL_WISSEN.wo_liegt(19.4072, -155.2834) FROM DUAL
+  FUNCTION wo_liegt(p_breite IN NUMBER, p_laenge IN NUMBER) RETURN VARCHAR2;
+
+  -- Läufe (die App): Start gibt die LAUF_ID zurück. Ohne Länge und Breite gilt der Schauplatz des Drehbuchs.
+  FUNCTION lauf_start(
+    p_sitzung_id IN NUMBER,
+    p_drehbuch   IN VARCHAR2,
+    p_titel      IN VARCHAR2,
+    p_riftzone   IN VARCHAR2 DEFAULT NULL,
+    p_km         IN NUMBER   DEFAULT NULL,
+    p_rate       IN NUMBER   DEFAULT NULL,
+    p_laenge_m   IN NUMBER   DEFAULT NULL,
+    p_laenge     IN NUMBER   DEFAULT NULL,
+    p_breite     IN NUMBER   DEFAULT NULL) RETURN NUMBER;
+  -- Stand während des Laufs: erreichtes Kapitel und gespielte Stunden
+  PROCEDURE lauf_stand(p_lauf_id IN NUMBER, p_kapitel IN NUMBER, p_sim_stunden IN NUMBER);
+  -- Ende: zählt Beben und Messungen, räumt die Läufe vor den letzten p_behalten auf
+  PROCEDURE lauf_ende(p_lauf_id IN NUMBER, p_kapitel IN NUMBER, p_abgebrochen IN VARCHAR2, p_sim_stunden IN NUMBER,
+                      p_behalten IN NUMBER DEFAULT 10);
+  -- Beben und Messwerte bleiben nur für die letzten p_behalten Läufe; die Zeilen in KIL_LAUF bleiben
+  PROCEDURE aufraeumen_laeufe(p_behalten IN NUMBER DEFAULT 10);
+
+END KIL_WISSEN;
+/
+
+CREATE OR REPLACE PACKAGE BODY KIL_WISSEN AS
+
+  g_ord     MDSYS.SDO_ORDINATE_ARRAY := MDSYS.SDO_ORDINATE_ARRAY();
+  g_gesetzt NUMBER := 0;
+
+  FUNCTION version RETURN VARCHAR2 IS
+  BEGIN
+    RETURN 'KIL_WISSEN 16.1 (Phase 16b)';
+  END version;
+
+  PROCEDURE geom_neu IS
+  BEGIN
+    g_ord := MDSYS.SDO_ORDINATE_ARRAY();
+  END geom_neu;
+
+  PROCEDURE geom_teil(p_zahlen IN MDSYS.SDO_ORDINATE_ARRAY) IS
+    v_n PLS_INTEGER := g_ord.COUNT;
+  BEGIN
+    IF p_zahlen IS NULL OR p_zahlen.COUNT = 0 THEN
+      RETURN;
+    END IF;
+    g_ord.EXTEND(p_zahlen.COUNT);
+    FOR i IN 1 .. p_zahlen.COUNT LOOP
+      g_ord(v_n + i) := p_zahlen(i);
+    END LOOP;
+  END geom_teil;
+
+  PROCEDURE geom_setze(
+    p_tabelle    IN VARCHAR2,
+    p_spalte     IN VARCHAR2,
+    p_schluessel_spalte IN VARCHAR2,
+    p_schluessel IN VARCHAR2,
+    p_gtype      IN NUMBER,
+    p_elem       IN MDSYS.SDO_ELEM_INFO_ARRAY) IS
+    v_ziel VARCHAR2(80) := UPPER(p_tabelle) || '.' || UPPER(p_spalte) || '.' || UPPER(p_schluessel_spalte);
+    v_geom MDSYS.SDO_GEOMETRY;
+    v_test VARCHAR2(4000);
+    v_leer NUMBER;
+  BEGIN
+    -- nur diese Spalten (der Name kommt in dynamisches SQL)
+    IF v_ziel NOT IN ('KIL_KRATER.RAND.NAME', 'KIL_STROM.SPALTE.NAME', 'KIL_STROM.ACHSE.NAME', 'KIL_STROM.UMRISS.NAME') THEN
+      RAISE_APPLICATION_ERROR(-20030, 'geom_setze: ' || v_ziel || ' ist nicht vorgesehen');
+    END IF;
+    IF g_ord.COUNT < 4 THEN
+      RAISE_APPLICATION_ERROR(-20031, 'geom_setze: zu wenige Zahlen für ' || v_ziel || ' ' || p_schluessel);
+    END IF;
+    -- schon gesetzt (oder die Zeile fehlt): nichts zu tun
+    EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ' || UPPER(p_tabelle) || ' WHERE ' || UPPER(p_schluessel_spalte) || ' = :k AND '
+                      || UPPER(p_spalte) || ' IS NULL' INTO v_leer USING p_schluessel;
+    IF v_leer = 0 THEN
+      g_ord := MDSYS.SDO_ORDINATE_ARRAY();
+      RETURN;
+    END IF;
+    v_geom := MDSYS.SDO_GEOMETRY(p_gtype, 8307, NULL, p_elem, g_ord);
+    v_test := MDSYS.SDO_GEOM.VALIDATE_GEOMETRY_WITH_CONTEXT(v_geom, 0.05);
+    IF v_test <> 'TRUE' THEN
+      g_ord := MDSYS.SDO_ORDINATE_ARRAY();
+      RAISE_APPLICATION_ERROR(-20032, 'geom_setze: ' || p_tabelle || '.' || p_spalte || ' ' || p_schluessel || ' ungültig: ' || SUBSTR(v_test, 1, 200));
+    END IF;
+    EXECUTE IMMEDIATE 'UPDATE ' || UPPER(p_tabelle) || ' SET ' || UPPER(p_spalte) || ' = :g WHERE ' || UPPER(p_schluessel_spalte)
+                      || ' = :k AND ' || UPPER(p_spalte) || ' IS NULL'
+      USING v_geom, p_schluessel;
+    g_gesetzt := g_gesetzt + SQL%ROWCOUNT;
+    g_ord := MDSYS.SDO_ORDINATE_ARRAY();
+  END geom_setze;
+
+  FUNCTION geom_gesetzt RETURN NUMBER IS
+  BEGIN
+    RETURN g_gesetzt;
+  END geom_gesetzt;
+
+  FUNCTION km(p_m IN NUMBER) RETURN VARCHAR2 IS
+  BEGIN
+    IF p_m IS NULL THEN
+      RETURN '?';
+    END IF;
+    IF p_m < 1000 THEN
+      RETURN TO_CHAR(ROUND(p_m, -1)) || ' m';
+    END IF;
+    RETURN REPLACE(TO_CHAR(ROUND(p_m / 1000, 1), 'FM9990.0'), '.', ',') || ' km';
+  END km;
+
+  FUNCTION wo_liegt(p_breite IN NUMBER, p_laenge IN NUMBER) RETURN VARCHAR2 IS
+    v_p      MDSYS.SDO_GEOMETRY := KIL_API.punkt(p_laenge, p_breite);
+    v_ort    VARCHAR2(200);
+    v_d      NUMBER;
+    v_krater VARCHAR2(400);
+    v_strom  VARCHAR2(200);
+  BEGIN
+    IF v_p IS NULL THEN
+      RETURN NULL;
+    END IF;
+    BEGIN
+      SELECT NAME, D INTO v_ort, v_d
+        FROM (SELECT NAME, MDSYS.SDO_GEOM.SDO_DISTANCE(GEOM, v_p, 0.05, 'unit=M') D
+                FROM KIL_ORT WHERE GEOM IS NOT NULL ORDER BY 2)
+       WHERE ROWNUM = 1;
+      v_ort := v_ort || ' (' || km(v_d) || ')';
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN v_ort := NULL;
+    END;
+    FOR k IN (SELECT NAME FROM KIL_KRATER
+               WHERE RAND IS NOT NULL AND MDSYS.SDO_ANYINTERACT(RAND, v_p) = 'TRUE'
+               ORDER BY FLAECHE_HA NULLS LAST) LOOP
+      v_krater := v_krater || CASE WHEN v_krater IS NULL THEN '' ELSE ' in ' END || k.NAME;
+    END LOOP;
+    BEGIN
+      SELECT NAME INTO v_strom
+        FROM (SELECT NAME FROM KIL_STROM
+               WHERE UMRISS IS NOT NULL AND MDSYS.SDO_ANYINTERACT(UMRISS, v_p) = 'TRUE'
+               ORDER BY JAHR_MODELL DESC NULLS LAST, JAHR_VON DESC)
+       WHERE ROWNUM = 1;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN v_strom := NULL;
+    END;
+    RETURN 'Ort: ' || NVL(v_ort, '–') || ' · Krater: ' || NVL(v_krater, '–') || ' · Strom: ' || NVL(v_strom, 'älter als die Karte der App');
+  END wo_liegt;
+
+  FUNCTION lauf_start(
+    p_sitzung_id IN NUMBER,
+    p_drehbuch   IN VARCHAR2,
+    p_titel      IN VARCHAR2,
+    p_riftzone   IN VARCHAR2 DEFAULT NULL,
+    p_km         IN NUMBER   DEFAULT NULL,
+    p_rate       IN NUMBER   DEFAULT NULL,
+    p_laenge_m   IN NUMBER   DEFAULT NULL,
+    p_laenge     IN NUMBER   DEFAULT NULL,
+    p_breite     IN NUMBER   DEFAULT NULL) RETURN NUMBER IS
+    v_id   NUMBER;
+    v_db   NUMBER;
+    v_geom MDSYS.SDO_GEOMETRY := KIL_API.punkt(p_laenge, p_breite);
+    v_ort  MDSYS.SDO_GEOMETRY;
+  BEGIN
+    BEGIN
+      SELECT D.DREHBUCH_ID, O.GEOM INTO v_db, v_ort
+        FROM KIL_DREHBUCH D LEFT JOIN KIL_ORT O ON O.ORT_ID = D.ORT_ID
+       WHERE D.SCHLUESSEL = p_drehbuch;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN v_db := NULL;
+    END;
+    IF v_geom IS NULL THEN
+      v_geom := v_ort;
+    END IF;
+    INSERT INTO KIL_LAUF (SITZUNG_ID, DREHBUCH_ID, TITEL, RIFTZONE, KM, RATE, LAENGE_M, GEOM)
+    VALUES (CASE WHEN p_sitzung_id > 0 THEN p_sitzung_id END, v_db, SUBSTR(p_titel, 1, 120), p_riftzone,
+            ROUND(p_km, 1), ROUND(p_rate, 1), ROUND(p_laenge_m), v_geom)
+    RETURNING LAUF_ID INTO v_id;
+    RETURN v_id;
+  END lauf_start;
+
+  PROCEDURE lauf_stand(p_lauf_id IN NUMBER, p_kapitel IN NUMBER, p_sim_stunden IN NUMBER) IS
+  BEGIN
+    UPDATE KIL_LAUF
+       SET KAPITEL_BIS = GREATEST(NVL(KAPITEL_BIS, 0), p_kapitel),
+           SIM_STUNDEN = ROUND(GREATEST(0, p_sim_stunden), 2)
+     WHERE LAUF_ID = p_lauf_id;
+  END lauf_stand;
+
+  PROCEDURE lauf_ende(p_lauf_id IN NUMBER, p_kapitel IN NUMBER, p_abgebrochen IN VARCHAR2, p_sim_stunden IN NUMBER,
+                      p_behalten IN NUMBER DEFAULT 10) IS
+  BEGIN
+    UPDATE KIL_LAUF L
+       SET BEENDET     = LOCALTIMESTAMP,
+           KAPITEL_BIS = GREATEST(NVL(KAPITEL_BIS, 0), p_kapitel),
+           ABGEBROCHEN = CASE WHEN p_abgebrochen = 'J' THEN 'J' ELSE 'N' END,
+           SIM_STUNDEN = ROUND(GREATEST(0, p_sim_stunden), 2),
+           BEBEN       = (SELECT COUNT(*) FROM KIL_BEBEN B WHERE B.LAUF_ID = L.LAUF_ID),
+           MAX_STAERKE = (SELECT MAX(STAERKE) FROM KIL_BEBEN B WHERE B.LAUF_ID = L.LAUF_ID),
+           MESSUNGEN   = (SELECT COUNT(*) FROM KIL_MESSUNG M WHERE M.LAUF_ID = L.LAUF_ID)
+     WHERE LAUF_ID = p_lauf_id;
+    aufraeumen_laeufe(p_behalten);
+  END lauf_ende;
+
+  PROCEDURE aufraeumen_laeufe(p_behalten IN NUMBER DEFAULT 10) IS
+    v_grenze NUMBER;
+  BEGIN
+    SELECT MIN(LAUF_ID) INTO v_grenze
+      FROM (SELECT LAUF_ID FROM KIL_LAUF ORDER BY LAUF_ID DESC)
+     WHERE ROWNUM <= GREATEST(1, p_behalten);
+    IF v_grenze IS NULL THEN
+      RETURN;
+    END IF;
+    DELETE FROM KIL_BEBEN WHERE LAUF_ID < v_grenze;
+    DELETE FROM KIL_MESSUNG WHERE LAUF_ID < v_grenze;
+  END aufraeumen_laeufe;
+
+END KIL_WISSEN;
+/

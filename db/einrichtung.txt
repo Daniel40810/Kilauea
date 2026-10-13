@@ -1,0 +1,39 @@
+Einrichter Kīlauea · Phase 16b · 13.10.2026 08:23:53
+
+1  Verbindung
+   Benutzer KILAUEA, Container PDBORCL, Dienst pdborcl
+   Oracle Database 21c Enterprise Edition Release 21.0.0.0.0 - Production
+
+2  Voraussetzungen
+   Rechte: CREATE SESSION, CREATE TABLE, CREATE SEQUENCE, CREATE TRIGGER, CREATE PROCEDURE vorhanden
+   Spatial: MDSYS.SDO_GEOMETRY vorhanden 21.0.0.0.0
+   Zeichensatz: AL32UTF8 (ʻokina und Makron bleiben erhalten)
+   Platz: Tablespace USERS, unbegrenzt
+
+3  Bestand im Schema
+   42 Objekte (6 TABLE, 6 SEQUENCE, 4 TRIGGER, 1 PACKAGE, 18 INDEX)
+   26 Objekte mit dem Präfix KIL_ gibt es schon; sie bleiben, nur Fehlendes wird ergänzt.
+   Bestand geschrieben nach db\bestand.txt
+
+4  Skripte in db
+   01_tabellen.sql: 65 Anweisungen, 61 ausgeführt, 4 schon vorhanden, 0 Fehler
+   02_objekte.sql: 17 Anweisungen, 6 ausgeführt, 11 schon vorhanden, 0 Fehler
+   03_api.sql: 2 Anweisungen, 2 ausgeführt, 0 schon vorhanden, 0 Fehler
+   04_wissen.sql: 126 Anweisungen, 126 ausgeführt, 0 schon vorhanden, 0 Fehler
+   05_wissen_objekte.sql: 46 Anweisungen, 46 ausgeführt, 0 schon vorhanden, 0 Fehler
+   06_grunddaten.sql: 545 Anweisungen, 545 ausgeführt, 0 schon vorhanden, 0 Fehler, 129 Datenzeilen neu
+
+5  Prüfung
+   Objekte vorhanden und gültig: 44 INDEX, 2 PACKAGE, 2 PACKAGE BODY, 13 SEQUENCE, 13 TABLE, 13 TRIGGER
+   Spatial: 12 von 12 Geometriespalten mit SRID 8307 und gültigem Index
+   Funktionsprobe (KIL_API 16.0 (Phase 16a)): Sitzung, Protokoll mit Ort, Zustand mit 2 Schaltern, Rücklesen, Geometrie ok
+   Suche im Umkreis (SDO_WITHIN_DISTANCE, 50 m) findet den Zustand: ok
+   Alles zurückgenommen.
+   Grunddaten (Zeilen): ORT 19, KRATER 14, STROM 49, STATION 12, DREHBUCH 6, KAPITEL 29
+   Grunddaten (Geometrien): KRATER.RAND 14, STROM.SCHLOT 40, STROM.SPALTE 25, STROM.ACHSE 40, STROM.UMRISS 49
+   Geometrien gültig: 128 von 128
+   wo_liegt(19,4072; −155,2834): Ort: Halemaʻumaʻu (0 m) · Krater: Halemaʻumaʻu in Kaluapele · Strom: Halemaʻumaʻu, Lavasee 2020–25
+   Funktionsprobe (KIL_WISSEN 16.1 (Phase 16b)): wo_liegt, Lauf mit Beben und Messungen, Ende mit Zählung, Beben im Umkreis ok
+   Alles zurückgenommen.
+
+ERGEBNIS: alles in Ordnung

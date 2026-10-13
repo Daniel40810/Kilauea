@@ -1,0 +1,22 @@
+# NetBeans / Ant
+build/
+dist/
+nbproject/private/
+
+# Zugangsdaten der Datenbank
+db/db.properties
+
+# Rohdaten der Höhen (Phase 2): groß, kommen nicht ins Git
+data/raw/
+/N1*W15*/
+/N2*W15*/
+/gt30*.tif
+# Zwischenspeicher des Geländes (wird beim Start gebaut)
+data/*.bin
+data/*.neu
+
+# Fotos aus der App (F12)
+Foto_*.png
+
+# Tagesprotokolle der App (Phase 16)
+logs/
